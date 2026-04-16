@@ -1,323 +1,363 @@
 package ventanas;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
+import interfaces.InterfazLibro;
 import modelo.AccesoBD;
+import dao.LibroDAO;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Map;
-import javax.swing.border.LineBorder;
 
 public class VentanaLibros extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
-	// Campos de entrada de datos del libro
-	private JTextField txtId, txtTitulo, txtAutor, txtAnio;
+	private JTextField txtId, txtTitulo, txtAutor, txtAño;
+	private JButton btnAgregar, btnEliminar, btnOrdenar, btnVolver;
 
-	// Botones de acciones principales
-	private JButton btnAgregar, btnEliminar, btnVolver, btnOrdenarPorTitulo;
-
-	// Tabla para mostrar libros
 	private JTable tabla;
 	private DefaultTableModel modelo;
 
 	public VentanaLibros() {
 
-		// Configuración básica de la ventana
-		setTitle("Gestión de Libros");
-		setSize(600, 450);
+		setSize(1920, 1080);
 		setLocationRelativeTo(null);
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setTitle("Book Management");
 
-		// Panel principal (fondo)
 		JPanel fondo = new JPanel();
 		fondo.setLayout(null);
 		fondo.setBackground(new Color(237, 230, 208));
 		setContentPane(fondo);
 
-		// Panel tipo "card" donde está la interfaz
 		JPanel card = new JPanel();
 		card.setLayout(null);
-		card.setBounds(50, 40, 500, 340);
+		card.setBounds(265, 90, 1000, 600);
 		card.setBackground(new Color(244, 239, 230));
-		card.setBorder(new LineBorder(null));
-
+		card.setBorder(BorderFactory.createLineBorder(new Color(139, 111, 71), 2));
 		fondo.add(card);
 
-		// Título de la ventana
-		JLabel titulo = new JLabel("Book management");
-		titulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
-		titulo.setBounds(170, 10, 200, 30);
+		JLabel titulo = new JLabel("Book Management");
+		titulo.setBounds(300, 20, 400, 30);
+		titulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
+		titulo.setHorizontalAlignment(SwingConstants.CENTER);
 		card.add(titulo);
 
-		// Campo ID
+		// LABELS
 		JLabel lblId = new JLabel("ID");
-		lblId.setBounds(30, 60, 80, 20);
+		lblId.setForeground(new Color(139, 111, 71));
+		lblId.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblId.setBounds(250, 104, 100, 25);
 		card.add(lblId);
 
-		txtId = new JTextField();
-		txtId.setBounds(90, 60, 100, 25);
-		card.add(txtId);
-
-		// Campo título
-		JLabel lblTitulo = new JLabel("Title");
-		lblTitulo.setBounds(210, 60, 80, 20);
+		JLabel lblTitulo = new JLabel("Qualification");
+		lblTitulo.setForeground(new Color(139, 111, 71));
+		lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblTitulo.setBounds(550, 104, 100, 25);
 		card.add(lblTitulo);
 
-		txtTitulo = new JTextField();
-		txtTitulo.setBounds(260, 60, 180, 25);
-		card.add(txtTitulo);
-
-		// Campo autor
 		JLabel lblAutor = new JLabel("Author");
-		lblAutor.setBounds(30, 95, 80, 20);
+		lblAutor.setForeground(new Color(139, 111, 71));
+		lblAutor.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblAutor.setBounds(250, 180, 100, 25);
 		card.add(lblAutor);
 
+		JLabel lblFecha = new JLabel("Date");
+		lblFecha.setForeground(new Color(139, 111, 71));
+		lblFecha.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblFecha.setBounds(550, 180, 100, 25);
+		card.add(lblFecha);
+
+		// CAMPOS
+		txtId = new JTextField();
+		txtId.setBounds(350, 100, 150, 35);
+		txtId.setBackground(new Color(250, 247, 242));
+		txtId.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtId.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtId);
+
+		txtTitulo = new JTextField();
+		txtTitulo.setBounds(650, 100, 150, 35);
+		txtTitulo.setBackground(new Color(250, 247, 242));
+		txtTitulo.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtTitulo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtTitulo);
+
 		txtAutor = new JTextField();
-		txtAutor.setBounds(90, 95, 180, 25);
+		txtAutor.setBounds(350, 180, 150, 35);
+		txtAutor.setBackground(new Color(250, 247, 242));
+		txtAutor.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtAutor.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		card.add(txtAutor);
 
-		// Campo fecha/año
-		JLabel lblAnio = new JLabel("Date (YYYY-MM-DD)");
-		lblAnio.setBounds(280, 95, 150, 20);
-		card.add(lblAnio);
+		txtAño = new JTextField();
+		txtAño.setBounds(650, 180, 150, 35);
+		txtAño.setBackground(new Color(250, 247, 242));
+		txtAño.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtAño.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtAño);
 
-		txtAnio = new JTextField();
-		txtAnio.setBounds(400, 95, 80, 25);
-		card.add(txtAnio);
-
-		// Botón agregar libro (creado con método reutilizable)
-		btnAgregar = crearBoton("Add Book", 140);
-
-		// Botón eliminar libro seleccionado
-		btnEliminar = new JButton("Delete");
-		btnEliminar.setForeground(Color.WHITE);
-		btnEliminar.setFocusPainted(false);
-		btnEliminar.setBorderPainted(false);
-		btnEliminar.setBackground(new Color(139, 111, 71));
-		btnEliminar.setBounds(257, 153, 200, 30);
-		btnEliminar.addActionListener(this);
-
-		// Botón ordenar libros por título
-		btnOrdenarPorTitulo = new JButton("Order by title");
-		btnOrdenarPorTitulo.setForeground(Color.WHITE);
-		btnOrdenarPorTitulo.setFocusPainted(false);
-		btnOrdenarPorTitulo.setBorderPainted(false);
-		btnOrdenarPorTitulo.setBackground(new Color(139, 111, 71));
-		btnOrdenarPorTitulo.setBounds(47, 206, 200, 30);
-		btnOrdenarPorTitulo.addActionListener(this);
-
-		// Botón volver a ventana anterior
-		btnVolver = new JButton("Go back");
-		btnVolver.setForeground(Color.WHITE);
-		btnVolver.setFocusPainted(false);
-		btnVolver.setBorderPainted(false);
-		btnVolver.setBackground(new Color(139, 111, 71));
-		btnVolver.setBounds(260, 206, 200, 30);
-		btnVolver.addActionListener(this);
-
-		// Añadir botones al panel
+		// BOTONES
+		btnAgregar = new JButton("Add");
+		btnAgregar.setBounds(150, 280, 150, 40);
+		btnAgregar.setBackground(new Color(120, 94, 60));
+		btnAgregar.setForeground(Color.WHITE);
+		btnAgregar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnAgregar.setFocusPainted(false);
+		btnAgregar.setBorder(null);
+		btnAgregar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnAgregar.addActionListener(this);
 		card.add(btnAgregar);
+
+		btnEliminar = new JButton("Delete");
+		btnEliminar.setBounds(333, 280, 150, 40);
+		btnEliminar.setBackground(new Color(120, 94, 60));
+		btnEliminar.setForeground(Color.WHITE);
+		btnEliminar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnEliminar.setFocusPainted(false);
+		btnEliminar.setBorder(null);
+		btnEliminar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnEliminar.addActionListener(this);
 		card.add(btnEliminar);
+
+		btnOrdenar = new JButton("Order");
+		btnOrdenar.setBounds(518, 280, 150, 40);
+		btnOrdenar.setBackground(new Color(120, 94, 60));
+		btnOrdenar.setForeground(Color.WHITE);
+		btnOrdenar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnOrdenar.setFocusPainted(false);
+		btnOrdenar.setBorder(null);
+		btnOrdenar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnOrdenar.addActionListener(this);
+		card.add(btnOrdenar);
+
+		btnVolver = new JButton("Return");
+		btnVolver.setBounds(700, 280, 150, 40);
+		btnVolver.setBackground(new Color(120, 94, 60));
+		btnVolver.setForeground(Color.WHITE);
+		btnVolver.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnVolver.setFocusPainted(false);
+		btnVolver.setBorder(null);
+		btnVolver.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnVolver.addActionListener(this);
 		card.add(btnVolver);
-		card.add(btnOrdenarPorTitulo);
 
-		// Modelo de tabla (estructura de columnas)
-		modelo = new DefaultTableModel(new String[] { "ID", "Title", "Author", "Date" }, 0);
+		// TABLA
+		modelo = new DefaultTableModel(new String[] { "ID", "Qualification", "Author", "Date" }, 0);
 
-		// JTable donde se muestran los datos
 		tabla = new JTable(modelo);
 
-		// Scroll para la tabla
+		tabla.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		tabla.setRowHeight(28);
+		tabla.setShowGrid(false);
+		tabla.setIntercellSpacing(new Dimension(0, 0));
+
+		// colores filas alternas
+		tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+			public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row,
+					int col) {
+				super.getTableCellRendererComponent(t, v, sel, foc, row, col);
+
+				if (!sel) {
+					setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 247, 242));
+				}
+
+				return this;
+			}
+		});
+
+		// selección
+		tabla.setSelectionBackground(new Color(200, 183, 156));
+		tabla.setSelectionForeground(Color.BLACK);
+
+		// HEADER
+		JTableHeader header = tabla.getTableHeader();
+		header.setBackground(new Color(120, 94, 60));
+		header.setForeground(Color.WHITE);
+		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		header.setBorder(BorderFactory.createEmptyBorder());
+
+		// SCROLL
 		JScrollPane scroll = new JScrollPane(tabla);
-		scroll.setBounds(30, 260, 440, 70);
+		scroll.setBounds(150, 350, 700, 200);
+		scroll.setBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)));
 
 		card.add(scroll);
 
-		// Carga inicial de libros desde la BD
+		// CLICK TABLA
+		tabla.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				try {
+					int fila = tabla.getSelectedRow();
+					if (fila < 0)
+						return;
+
+					txtId.setText(tabla.getValueAt(fila, 0).toString());
+					txtTitulo.setText(tabla.getValueAt(fila, 1).toString());
+					txtAutor.setText(tabla.getValueAt(fila, 2).toString());
+					txtAño.setText(tabla.getValueAt(fila, 3).toString());
+				} catch (Exception ex) {
+					mostrarError(ex);
+				}
+			}
+		});
 		cargarLibros();
 	}
 
-	// Método auxiliar para crear botones con estilo común
-	private JButton crearBoton(String texto, int y) {
-
-		JButton b = new JButton(texto);
-
-		b.setBounds(47, 153, 200, 30);
-		b.setBackground(new Color(139, 111, 71));
-		b.setForeground(Color.WHITE);
-
-		b.setFocusPainted(false);
-		b.setBorderPainted(false);
-
-		b.addActionListener(this);
-
-		return b;
+	// VALIDACIÓN
+	private boolean validar() {
+		if (txtId.getText().isEmpty())
+			return mensaje("Mandatory ID");
+		if (txtTitulo.getText().isEmpty())
+			return mensaje("Mandatory title");
+		if (txtAutor.getText().isEmpty())
+			return mensaje("Author required");
+		if (txtAño.getText().isEmpty())
+			return mensaje("Mandatory date");
+		return true;
 	}
 
-	// Carga todos los libros desde la base de datos y los muestra en la tabla
+	private boolean mensaje(String msg) {
+		JOptionPane.showMessageDialog(this, msg);
+		return false;
+	}
+
+	// ERRORES
+	private void mostrarError(Exception e) {
+		String msg = "Error";
+		if (e instanceof NumberFormatException)
+			msg = "Invalid ID";
+		else if (e instanceof SQLException)
+			msg = "Error BD";
+		else if (e.getMessage() != null)
+			msg = e.getMessage();
+
+		JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+	}
+
+	private void limpiar() {
+		txtId.setText("");
+		txtTitulo.setText("");
+		txtAutor.setText("");
+		txtAño.setText("");
+	}
+
+	// CRUD
 	private void cargarLibros() {
-
 		try {
-
-			// Limpiar tabla antes de recargar
 			modelo.setRowCount(0);
 
-			// Conexión con capa de datos
-			LibrosITF bd = new AccesoBD();
+			InterfazLibro dao = new LibroDAO();
+			Map<Integer, String[]> datos = dao.verLibros();
 
-			// Obtener libros desde BD
-			Map<Integer, Libro> libros = bd.verLibros();
-
-			// Volcar datos en la tabla
-			for (Map.Entry<Integer, Libro> entry : libros.entrySet()) {
-
-				int id = entry.getKey();
-				Libro libro = entry.getValue();
-
-				modelo.addRow(new Object[] {
-					id,
-					libro.getTitulo(),
-					libro.getAutor(),
-					libro.getAnio()
-				});
+			for (Integer id : datos.keySet()) {
+				String[] d = datos.get(id);
+				modelo.addRow(new Object[] { id, d[0], d[1], d[2] });
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			mostrarError(e);
 		}
 	}
 
-	// Añadir un libro a la base de datos
-	private void agregarLibro() {
-
+	private void agregar() {
 		try {
-			// Validación de campos vacíos
-			if (txtId.getText().isEmpty() || txtTitulo.getText().isEmpty()
-					|| txtAutor.getText().isEmpty() || txtAnio.getText().isEmpty()) {
+			if (!validar())
+				return;
 
-				JOptionPane.showMessageDialog(this, "Fill out all fields");
+			int id = Integer.parseInt(txtId.getText());
+
+			InterfazLibro dao = new LibroDAO();
+
+			if (dao.existeLibro(id)) {
+				JOptionPane.showMessageDialog(this, "ID already exists");
 				return;
 			}
 
-			int id;
+			dao.insertarLibro(id, txtTitulo.getText(), txtAutor.getText(), txtAño.getText());
 
-			// Validación de ID numérico
-			try {
-				id = Integer.parseInt(txtId.getText());
-			} catch (NumberFormatException e) {
-				JOptionPane.showMessageDialog(this, "The ID have to be a whole number");
-				return;
-			}
+			JOptionPane.showMessageDialog(this, "Book added successfully");
 
-			AccesoBD bd = new AccesoBD();
-
-			// Comprobar si el ID ya existe
-			if (bd.existeLibro(id)) {
-				JOptionPane.showMessageDialog(this, "Error: ID repeat");
-				return;
-			}
-
-			// Insertar libro en BD
-			try {
-				bd.insertarLibro(id, txtTitulo.getText(), txtAutor.getText(), txtAnio.getText());
-			} catch (Exception e) {
-				JOptionPane.showMessageDialog(this, e.getMessage());
-				return;
-			}
-
-			// Recargar tabla y limpiar campos
 			cargarLibros();
-			limpiarCampos();
+			limpiar();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			mostrarError(e);
 		}
 	}
 
-	// Eliminar libro seleccionado en la tabla
-	private void eliminarLibro() {
-
+	private void ejecutarProcedimientoLibros() {
 		try {
+			AccesoBD bd = new AccesoBD();
+			Connection con = bd.conectar();
 
+			CallableStatement cs = con.prepareCall("{CALL TodosLosLibrosOrdenados()}");
+
+			ResultSet rs = cs.executeQuery();
+
+			modelo.setRowCount(0);
+
+			while (rs.next()) {
+				modelo.addRow(new Object[] { rs.getInt("ID_LIBRO"), rs.getString("TITULO"), rs.getString("AUTOR"),
+						rs.getDate("AÑO") });
+			}
+
+			rs.close();
+			cs.close();
+			con.close();
+
+		} catch (Exception e) {
+			mostrarError(e);
+		}
+	}
+
+	private void eliminar() {
+		try {
 			int fila = tabla.getSelectedRow();
-
-			// Validar selección
 			if (fila == -1) {
 				JOptionPane.showMessageDialog(this, "Select a book");
 				return;
 			}
 
-			// Obtener ID del libro seleccionado
 			int id = (int) tabla.getValueAt(fila, 0);
 
-			AccesoBD bd = new AccesoBD();
-			bd.borrarLibro(id);
+			int confirm = JOptionPane.showConfirmDialog(this, "Delete book?");
+			if (confirm != 0)
+				return;
 
-			// Recargar tabla
+			new LibroDAO().borrarLibro(id);
+
 			cargarLibros();
-			limpiarCampos();
+			limpiar();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			mostrarError(e);
 		}
 	}
 
-	// Cerrar ventana actual
-	private void volver() {
-		this.dispose();
-	}
-
-	// Control de eventos de botones
 	public void actionPerformed(ActionEvent e) {
 
 		if (e.getSource() == btnAgregar)
-			agregarLibro();
-
+			agregar();
 		if (e.getSource() == btnEliminar)
-			eliminarLibro();
-
+			eliminar();
+		if (e.getSource() == btnOrdenar)
+		    ejecutarProcedimientoLibros();
 		if (e.getSource() == btnVolver)
-			volver();
-
-		if (e.getSource() == btnOrdenarPorTitulo)
-			TodosLosLibrosOrdenados1();
-	}
-
-	// Limpiar campos del formulario
-	private void limpiarCampos() {
-		txtId.setText("");
-		txtTitulo.setText("");
-		txtAutor.setText("");
-		txtAnio.setText("");
-	}
-
-	// Mostrar libros ordenados por título
-	private void TodosLosLibrosOrdenados1() {
-
-		try {
-
-			modelo.setRowCount(0);
-
-			AccesoBD bd = new AccesoBD();
-			Map<Integer, Libro> libros = bd.TodosLosLibrosOrdenados();
-
-			for (Map.Entry<Integer, Libro> entry : libros.entrySet()) {
-
-				Libro libro = entry.getValue();
-
-				modelo.addRow(new Object[] {
-					entry.getKey(),
-					libro.getTitulo(),
-					libro.getAutor(),
-					libro.getAnio()
-				});
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			dispose();
 	}
 }

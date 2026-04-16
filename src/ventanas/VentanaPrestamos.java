@@ -1,119 +1,447 @@
 package ventanas;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+
+import interfaces.*;
+import modelo.AccesoBD;
+import dao.*;
+
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Map;
 
 public class VentanaPrestamos extends JFrame implements ActionListener {
 
-    private JTextField txtLibro;
-    private JTextField txtFecha;
+	private static final long serialVersionUID = 1L;
 
-    private JButton btnRegistrar;
-    private JButton btnVolver;
+	private JTextField txtId, txtUsuario, txtLibro, txtFechaPrestamo, txtFechaLimite, txtFechaDevolucion;
+	private JButton btnAgregar, btnEliminar, btnModificar, btnVolver;
 
-    private JTable tabla;
-    private DefaultTableModel modelo;
+	private JTable tabla;
+	private DefaultTableModel modelo;
 
-    public VentanaPrestamos(){
+	public VentanaPrestamos() {
 
-        setTitle("Préstamos");
-        setSize(600,420);
-        setLocationRelativeTo(null);
+		setSize(1920, 1080);
+		setLocationRelativeTo(null);
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setTitle("Loan Management");
 
-        JPanel fondo = new JPanel();
-        fondo.setLayout(null);
-        fondo.setBackground(new Color(244,239,230));
+		JPanel fondo = new JPanel();
+		fondo.setLayout(null);
+		fondo.setBackground(new Color(237, 230, 208));
+		setContentPane(fondo);
 
-        setContentPane(fondo);
+		// CARD
+		JPanel card = new JPanel();
+		card.setLayout(null);
+		card.setBounds(265, 90, 1000, 600);
+		card.setBackground(new Color(244, 239, 230));
+		card.setBorder(BorderFactory.createLineBorder(new Color(139, 111, 71), 2));
+		fondo.add(card);
 
-        JPanel card = new JPanel();
-        card.setLayout(null);
-        card.setBounds(50,40,500,320);
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createLineBorder(new Color(200,183,156)));
+		JLabel titulo = new JLabel("Loan Management");
+		titulo.setBounds(300, 20, 400, 30);
+		titulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
+		titulo.setHorizontalAlignment(SwingConstants.CENTER);
+		card.add(titulo);
 
-        fondo.add(card);
+		// LABELS
+		JLabel lblId = new JLabel("ID");
+		lblId.setForeground(new Color(139, 111, 71));
+		lblId.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblId.setBounds(200, 79, 100, 25);
+		card.add(lblId);
 
-        JLabel titulo = new JLabel("Gestión de Préstamos");
-        titulo.setFont(new Font("Segoe UI",Font.BOLD,20));
-        titulo.setBounds(150,10,220,30);
+		JLabel lblUsuario = new JLabel("User");
+		lblUsuario.setForeground(new Color(139, 111, 71));
+		lblUsuario.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblUsuario.setBounds(480, 79, 100, 25);
+		card.add(lblUsuario);
 
-        card.add(titulo);
+		JLabel lblLibro = new JLabel("Book");
+		lblLibro.setForeground(new Color(139, 111, 71));
+		lblLibro.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblLibro.setBounds(200, 154, 100, 25);
+		card.add(lblLibro);
 
-        JLabel lblLibro = new JLabel("Libro");
-        lblLibro.setBounds(40,70,80,20);
-        card.add(lblLibro);
+		JLabel lblFechaPrestamo = new JLabel("Loan Date");
+		lblFechaPrestamo.setForeground(new Color(139, 111, 71));
+		lblFechaPrestamo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblFechaPrestamo.setBounds(480, 154, 120, 25);
+		card.add(lblFechaPrestamo);
 
-        txtLibro = new JTextField();
-        txtLibro.setBounds(100,70,150,25);
-        card.add(txtLibro);
+		JLabel lblFechaLimite = new JLabel("Deadline");
+		lblFechaLimite.setForeground(new Color(139, 111, 71));
+		lblFechaLimite.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblFechaLimite.setBounds(200, 231, 120, 25);
+		card.add(lblFechaLimite);
 
-        JLabel lblFecha = new JLabel("Fecha");
-        lblFecha.setBounds(260,70,80,20);
-        card.add(lblFecha);
+		JLabel lblFechaDevolucion = new JLabel("Return Date");
+		lblFechaDevolucion.setForeground(new Color(139, 111, 71));
+		lblFechaDevolucion.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		lblFechaDevolucion.setBounds(480, 231, 150, 25);
+		card.add(lblFechaDevolucion);
 
-        txtFecha = new JTextField();
-        txtFecha.setBounds(310,70,150,25);
-        card.add(txtFecha);
+		// CAMPOS
+		txtId = new JTextField();
+		txtId.setBounds(300, 75, 150, 35);
+		txtId.setBackground(new Color(250, 247, 242));
+		txtId.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtId.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtId);
 
-        btnRegistrar = crearBoton("Registrar préstamo",120);
-        btnVolver = crearBoton("Volver",160);
+		txtUsuario = new JTextField();
+		txtUsuario.setBounds(610, 75, 150, 35);
+		txtUsuario.setBackground(new Color(250, 247, 242));
+		txtUsuario
+				.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+						BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtUsuario);
 
-        card.add(btnRegistrar);
-        card.add(btnVolver);
+		txtLibro = new JTextField();
+		txtLibro.setBounds(300, 150, 150, 35);
+		txtLibro.setBackground(new Color(250, 247, 242));
+		txtLibro.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+				BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtLibro.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtLibro);
 
-        String[] columnas = {"Libro","Fecha"};
+		txtFechaPrestamo = new JTextField();
+		txtFechaPrestamo.setBounds(610, 150, 150, 35);
+		txtFechaPrestamo.setBackground(new Color(250, 247, 242));
+		txtFechaPrestamo
+				.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+						BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtFechaPrestamo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtFechaPrestamo);
 
-        modelo = new DefaultTableModel(columnas,0);
+		txtFechaLimite = new JTextField();
+		txtFechaLimite.setBounds(300, 225, 150, 35);
+		txtFechaLimite.setBackground(new Color(250, 247, 242));
+		txtFechaLimite
+				.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+						BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtFechaLimite.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtFechaLimite);
 
-        tabla = new JTable(modelo);
+		txtFechaDevolucion = new JTextField();
+		txtFechaDevolucion.setBounds(610, 225, 150, 35);
+		txtFechaDevolucion.setBackground(new Color(250, 247, 242));
+		txtFechaDevolucion
+				.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)),
+						BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+		txtFechaDevolucion.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		card.add(txtFechaDevolucion);
 
-        JScrollPane scroll = new JScrollPane(tabla);
-        scroll.setBounds(40,200,420,80);
+		// BOTONES
+		btnAgregar = new JButton("Add");
+		btnAgregar.setBounds(74, 285, 150, 40);
+		btnAgregar.setBackground(new Color(120, 94, 60));
+		btnAgregar.setForeground(Color.WHITE);
+		btnAgregar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnAgregar.setFocusPainted(false);
+		btnAgregar.setBorder(null);
+		btnAgregar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnAgregar.addActionListener(this);
+		card.add(btnAgregar);
 
-        card.add(scroll);
-    }
+		btnModificar = new JButton("Modify");
+		btnModificar.setBounds(247, 285, 150, 40);
+		btnModificar.setBackground(new Color(120, 94, 60));
+		btnModificar.setForeground(Color.WHITE);
+		btnModificar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnModificar.setFocusPainted(false);
+		btnModificar.setBorder(null);
+		btnModificar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnModificar.addActionListener(this);
+		card.add(btnModificar);
 
-    private JButton crearBoton(String texto,int y){
+		btnEliminar = new JButton("Delete");
+		btnEliminar.setBounds(421, 285, 150, 40);
+		btnEliminar.setBackground(new Color(120, 94, 60));
+		btnEliminar.setForeground(Color.WHITE);
+		btnEliminar.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnEliminar.setFocusPainted(false);
+		btnEliminar.setBorder(null);
+		btnEliminar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnEliminar.addActionListener(this);
+		card.add(btnEliminar);
 
-        JButton b = new JButton(texto);
+		btnVolver = new JButton("Return");
+		btnVolver.setBounds(592, 285, 150, 40);
+		btnVolver.setBackground(new Color(120, 94, 60));
+		btnVolver.setForeground(Color.WHITE);
+		btnVolver.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnVolver.setFocusPainted(false);
+		btnVolver.setBorder(null);
+		btnVolver.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnVolver.addActionListener(this);
+		card.add(btnVolver);
 
-        b.setBounds(170,y,180,30);
+		JButton btnVerPrestamos = new JButton("See Users");
+		btnVerPrestamos.setBounds(765, 285, 150, 40);
+		btnVerPrestamos.setBackground(new Color(120, 94, 60));
+		btnVerPrestamos.setForeground(Color.WHITE);
+		btnVerPrestamos.setFont(new Font("Segoe UI", Font.BOLD, 13));
+		btnVerPrestamos.setFocusPainted(false);
+		btnVerPrestamos.setBorder(null);
+		btnVerPrestamos.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		btnVerPrestamos.addActionListener(this);
+		card.add(btnVerPrestamos);
 
-        b.setBackground(new Color(139,111,71));
-        b.setForeground(Color.WHITE);
+		// TABLA
+		modelo = new DefaultTableModel(
+				new String[] { "ID", "User", "Book", "Loan Date", "Deadline", "Return Date" }, 0);
 
-        b.setFocusPainted(false);
-        b.setBorderPainted(false);
+		tabla = new JTable(modelo);
 
-        b.addActionListener(this);
+		tabla.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+		tabla.setRowHeight(28);
+		tabla.setShowGrid(false);
+		tabla.setIntercellSpacing(new Dimension(0, 0));
 
-        return b;
-    }
+		// colores filas alternas
+		tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+			public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row,
+					int col) {
+				super.getTableCellRendererComponent(t, v, sel, foc, row, col);
 
-    private void registrarPrestamo(){
+				if (!sel) {
+					setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 247, 242));
+				}
 
-        String libro = txtLibro.getText();
-        String fecha = txtFecha.getText();
+				return this;
+			}
+		});
 
-        modelo.addRow(new Object[]{libro,fecha});
+		// selección
+		tabla.setSelectionBackground(new Color(200, 183, 156));
+		tabla.setSelectionForeground(Color.BLACK);
 
-        txtLibro.setText("");
-        txtFecha.setText("");
-    }
+		// HEADER
+		JTableHeader header = tabla.getTableHeader();
+		header.setBackground(new Color(120, 94, 60));
+		header.setForeground(Color.WHITE);
+		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+		header.setBorder(BorderFactory.createEmptyBorder());
 
-    private void volver(){
-        this.dispose();
-    }
+		// SCROLL
+		JScrollPane scroll = new JScrollPane(tabla);
+		scroll.setBounds(150, 350, 700, 200);
+		scroll.setBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)));
 
-    public void actionPerformed(ActionEvent e){
+		card.add(scroll);
 
-        if(e.getSource()==btnRegistrar)
-            registrarPrestamo();
+		// CLICK TABLA
+		tabla.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				try {
+					int fila = tabla.getSelectedRow();
+					if (fila < 0)
+						return;
 
-        if(e.getSource()==btnVolver)
-            volver();
-    }
+					txtId.setText(tabla.getValueAt(fila, 0).toString());
+					txtUsuario.setText(tabla.getValueAt(fila, 1).toString());
+					txtLibro.setText(tabla.getValueAt(fila, 2).toString());
+					txtFechaPrestamo.setText(tabla.getValueAt(fila, 3).toString());
+					txtFechaLimite.setText(tabla.getValueAt(fila, 4).toString());
+					txtFechaDevolucion.setText(tabla.getValueAt(fila, 5).toString());
+
+				} catch (Exception ex) {
+					mostrarError(ex);
+				}
+			}
+		});
+
+		cargarPrestamos();
+	}
+
+	// VALIDACIÓN
+	private boolean validarCampos() {
+
+		if (txtId.getText().isEmpty())
+			return mensaje("Mandatory ID");
+
+		try {
+			Integer.parseInt(txtId.getText());
+		} catch (Exception e) {
+			return mensaje("Numeric ID");
+		}
+
+		if (txtUsuario.getText().isEmpty())
+			return mensaje("Mandatory user");
+		if (txtLibro.getText().isEmpty())
+			return mensaje("Mandatory book");
+		if (txtFechaPrestamo.getText().isEmpty())
+			return mensaje("Mandatory loan date");
+		if (txtFechaLimite.getText().isEmpty())
+			return mensaje("Mandatory deadline");
+
+		if (!txtFechaPrestamo.getText().matches("\\d{4}-\\d{2}-\\d{2}"))
+			return mensaje("Invalid date format (yyyy-MM-dd)");
+
+		return true;
+	}
+
+	private boolean mensaje(String msg) {
+		JOptionPane.showMessageDialog(this, msg);
+		return false;
+	}
+
+	// ERRORES
+	private void mostrarError(Exception e) {
+		String msg = "Error";
+		if (e instanceof NumberFormatException)
+			msg = "Invalid number";
+		else if (e instanceof SQLException)
+			msg = "Error BD";
+		else if (e.getMessage() != null)
+			msg = e.getMessage();
+
+		JOptionPane.showMessageDialog(this, msg);
+	}
+
+	private void limpiar() {
+		txtId.setText("");
+		txtUsuario.setText("");
+		txtLibro.setText("");
+		txtFechaPrestamo.setText("");
+		txtFechaLimite.setText("");
+		txtFechaDevolucion.setText("");
+	}
+
+	// CRUD
+	private void cargarPrestamos() {
+		try {
+			modelo.setRowCount(0);
+
+			InterfazPrestamo dao = new PrestamoDAO();
+			Map<Integer, String[]> datos = dao.verPrestamos();
+
+			for (Integer id : datos.keySet()) {
+				String[] d = datos.get(id);
+				modelo.addRow(new Object[] { id, d[0], d[1], d[2], d[3], d[4] });
+			}
+
+		} catch (Exception e) {
+			mostrarError(e);
+		}
+	}
+
+	private void agregar() {
+		try {
+			if (!validarCampos())
+				return;
+
+			InterfazPrestamo dao = new PrestamoDAO();
+
+			dao.insertarPrestamo(Integer.parseInt(txtId.getText()), Integer.parseInt(txtUsuario.getText()),
+					Integer.parseInt(txtLibro.getText()), txtFechaPrestamo.getText(), txtFechaLimite.getText(),
+					txtFechaDevolucion.getText());
+
+			cargarPrestamos();
+			limpiar();
+
+		} catch (Exception e) {
+			mostrarError(e);
+		}
+	}
+
+	private void verPrestamosUsuarioBD() {
+		try {
+			AccesoBD bd = new AccesoBD();
+			Connection con = bd.conectar();
+
+			CallableStatement cs = con.prepareCall("{CALL VerPrestamosUsuario(?)}");
+			cs.setInt(1, Integer.parseInt(txtUsuario.getText()));
+
+			ResultSet rs = cs.executeQuery();
+
+			modelo.setRowCount(0);
+
+			while (rs.next()) {
+				modelo.addRow(new Object[] { rs.getInt("ID_PRESTAMO"), rs.getString("NOMBRE"), rs.getString("TITULO"),
+						rs.getDate("FECHA_PRESTAMO"), rs.getDate("FECHA_LIMITE") });
+			}
+
+			rs.close();
+			cs.close();
+			con.close();
+
+		} catch (Exception e) {
+			mostrarError(e);
+		}
+	}
+
+	private void modificar() {
+		try {
+			if (!validarCampos())
+				return;
+
+			InterfazPrestamo dao = new PrestamoDAO();
+
+			dao.modificarPrestamo(Integer.parseInt(txtId.getText()), Integer.parseInt(txtUsuario.getText()),
+					Integer.parseInt(txtLibro.getText()), txtFechaPrestamo.getText(), txtFechaLimite.getText(),
+					txtFechaDevolucion.getText());
+
+			cargarPrestamos();
+			limpiar();
+
+		} catch (Exception e) {
+			mostrarError(e);
+		}
+	}
+
+	private void eliminar() {
+		try {
+			int fila = tabla.getSelectedRow();
+			if (fila == -1) {
+				JOptionPane.showMessageDialog(this, "Select a loan");
+				return;
+			}
+
+			int confirm = JOptionPane.showConfirmDialog(this, "Cancel loan?");
+			if (confirm != 0)
+				return;
+
+			int id = Integer.parseInt(tabla.getValueAt(fila, 0).toString());
+
+			InterfazPrestamo dao = new PrestamoDAO();
+			dao.borrarPrestamo(id);
+
+			cargarPrestamos();
+			limpiar();
+
+		} catch (Exception e) {
+			mostrarError(e);
+		}
+	}
+
+	public void actionPerformed(ActionEvent e) {
+		try {
+			if (e.getSource() == btnAgregar)
+				agregar();
+			if (e.getSource() == btnModificar)
+				modificar();
+			if (e.getSource() == btnEliminar)
+				eliminar();
+			if (e.getSource() == btnVolver)
+				dispose();
+			if (e.getActionCommand().equals("See Users"))
+				verPrestamosUsuarioBD();
+		} catch (Exception ex) {
+			mostrarError(ex);
+		}
+	}
 }
