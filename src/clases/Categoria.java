@@ -10,7 +10,8 @@ public class Categoria {
 
     public Categoria(int idCategoria, String tipoCategoria, String descripcion) {
         this.idCategoria = idCategoria;
-        this.tipoCategoria = TipoCategoria.valueOf(tipoCategoria.toUpperCase().replace(" ", "_"));
+        this.tipoCategoria = TipoCategoria.valueOf(tipoCategoria.toUpperCase().replace(" ", "_"));  // Convierte el texto recibido a mayúsculas, reemplaza comas si es necesario
+        // y lo transforma al enum TipoCategoria
         this.descripcion = descripcion;
     }
 
