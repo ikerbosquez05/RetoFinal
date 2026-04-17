@@ -17,40 +17,76 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-// Ventana principal para gestionar categorías
+/**
+ * Ventana de gestión de categorías de la biblioteca.
+ * <p>
+ * Proporciona una interfaz gráfica para realizar operaciones CRUD (Create,
+ * Read, Delete) sobre las categorías almacenadas en la base de datos. Incluye
+ * un formulario para introducir datos, una tabla para visualizar las
+ * categorías, botones de acción y la posibilidad de consultar libros asociados
+ * a una categoría mediante un procedimiento almacenado.
+ * </p>
+ *
+
+ * @version 1.0
+ * @see InterfazCategoria
+ * @see CategoriaDAO
+ * @see AccesoBD
+ */
 public class VentanaCategorias extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
-	// Campos de texto para introducir datos
+	/**
+	 * Campos de texto del formulario.
+	 * <ul>
+	 * <li>{@code txtId} – Identificador único de la categoría.</li>
+	 * <li>{@code txtTipo} – Tipo o nombre de la categoría.</li>
+	 * <li>{@code txtDescripcion} – Descripción de la categoría.</li>
+	 * </ul>
+	 */
 	private JTextField txtId, txtTipo, txtDescripcion;
 
-	// Botones de la interfaz
-	private JButton btnAgregar, btnEliminar, btnVolver;
+	/** Botón para agregar una nueva categoría a la base de datos. */
+	private JButton btnAgregar;
 
-	// Tabla y modelo de datos
+	/** Botón para eliminar la categoría seleccionada. */
+	private JButton btnEliminar;
+
+	/** Botón para cerrar la ventana y volver a la pantalla anterior. */
+	private JButton btnVolver;
+
+	/** Tabla que muestra el listado de categorías. */
 	private JTable tabla;
+
+	/** Modelo de datos de la tabla de categorías. */
 	private DefaultTableModel modelo;
 
-	// DAO para acceder a la base de datos
+	/** DAO que gestiona el acceso a la base de datos de categorías. */
 	private InterfazCategoria dao = new CategoriaDAO();
 
+	/**
+	 * Constructor de la ventana de gestión de categorías.
+	 * <p>
+	 * Inicializa todos los componentes gráficos: panel principal, etiquetas, campos
+	 * de texto, botones y tabla. Configura estilos visuales y eventos. Finalmente,
+	 * carga las categorías existentes desde la base de datos.
+	 * </p>
+	 */
 	public VentanaCategorias() {
 
-		// Configuración básica de la ventana
 		setSize(1920, 1080);
 		setLocationRelativeTo(null);
 		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setTitle("Category Management");
 
-		// Panel de fondo
 		JPanel fondo = new JPanel();
 		fondo.setLayout(null);
 		fondo.setBackground(new Color(237, 230, 208));
 		setContentPane(fondo);
 
-		// Tarjeta principal (contenedor)
+		// PANEL PRINCIPAL
 		JPanel card = new JPanel();
 		card.setLayout(null);
 		card.setBounds(265, 90, 1000, 600);
@@ -58,14 +94,13 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		card.setBorder(BorderFactory.createLineBorder(new Color(139, 111, 71), 2));
 		fondo.add(card);
 
-		// Título
 		JLabel titulo = new JLabel("Category Management");
 		titulo.setBounds(300, 20, 400, 30);
 		titulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
 		titulo.setHorizontalAlignment(SwingConstants.CENTER);
 		card.add(titulo);
 
-		// Labels
+		// LABELS
 		JLabel lblId = new JLabel("ID");
 		lblId.setForeground(new Color(139, 111, 71));
 		lblId.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -84,7 +119,7 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		lblDesc.setBounds(250, 184, 100, 25);
 		card.add(lblDesc);
 
-		// Campos de texto
+		// CAMPOS DE TEXTO
 		txtId = new JTextField();
 		txtId.setBounds(350, 100, 150, 35);
 		txtId.setBackground(new Color(250, 247, 242));
@@ -110,66 +145,52 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		txtDescripcion.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		card.add(txtDescripcion);
 
-		// Botón agregar
+		// BOTONES
 		btnAgregar = new JButton("Add");
 		btnAgregar.setBounds(150, 280, 150, 40);
 		btnAgregar.setBackground(new Color(120, 94, 60));
 		btnAgregar.setForeground(Color.WHITE);
 		btnAgregar.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		btnAgregar.setFocusPainted(false);
-		btnAgregar.setBorder(null);
 		btnAgregar.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnAgregar.addActionListener(this);
 		card.add(btnAgregar);
 
-		// Botón eliminar
 		btnEliminar = new JButton("Delete");
 		btnEliminar.setBounds(332, 280, 150, 40);
 		btnEliminar.setBackground(new Color(120, 94, 60));
 		btnEliminar.setForeground(Color.WHITE);
 		btnEliminar.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		btnEliminar.setFocusPainted(false);
-		btnEliminar.setBorder(null);
 		btnEliminar.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnEliminar.addActionListener(this);
 		card.add(btnEliminar);
 
-		// Botón volver
 		btnVolver = new JButton("Return");
 		btnVolver.setBounds(518, 280, 150, 40);
 		btnVolver.setBackground(new Color(120, 94, 60));
 		btnVolver.setForeground(Color.WHITE);
 		btnVolver.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		btnVolver.setFocusPainted(false);
-		btnVolver.setBorder(null);
 		btnVolver.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnVolver.addActionListener(this);
 		card.add(btnVolver);
 
-		// Botón para llamar a la función de BD
 		JButton btnVerLibros = new JButton("See books");
 		btnVerLibros.setBounds(700, 280, 150, 40);
 		btnVerLibros.setBackground(new Color(120, 94, 60));
 		btnVerLibros.setForeground(Color.WHITE);
 		btnVerLibros.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		btnVerLibros.setFocusPainted(false);
-		btnVerLibros.setBorder(null);
 		btnVerLibros.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		btnVerLibros.addActionListener(this);
 		card.add(btnVerLibros);
 
-		// Modelo de tabla
+		// TABLA
 		modelo = new DefaultTableModel(new String[] { "ID", "Type", "Description" }, 0);
-
 		tabla = new JTable(modelo);
 
-		// Estilo de tabla
 		tabla.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		tabla.setRowHeight(28);
 		tabla.setShowGrid(false);
-		tabla.setIntercellSpacing(new Dimension(0, 0));
 
-		// Filas alternas
+		// FILAS ALTERNAS
 		tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 			public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row,
 					int col) {
@@ -181,26 +202,41 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 			}
 		});
 
-		// Selección
-		tabla.setSelectionBackground(new Color(200, 183, 156));
-		tabla.setSelectionForeground(Color.BLACK);
-
-		// Cabecera
+		// CABECERA
 		JTableHeader header = tabla.getTableHeader();
 		header.setBackground(new Color(120, 94, 60));
 		header.setForeground(Color.WHITE);
-		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-		// Scroll
 		JScrollPane scroll = new JScrollPane(tabla);
 		scroll.setBounds(150, 350, 700, 200);
 		card.add(scroll);
+		
+		// EVENTO CLICK TABLA
+				tabla.addMouseListener(new MouseAdapter() {
+					public void mouseClicked(MouseEvent e) {
+						try {
+							int fila = tabla.getSelectedRow();
+							if (fila < 0)
+								return;
 
-		// Cargar datos iniciales
+							txtId.setText(tabla.getValueAt(fila, 0).toString());
+							txtTipo.setText(tabla.getValueAt(fila, 1).toString());
+							txtDescripcion.setText(tabla.getValueAt(fila, 2).toString());
+
+						} catch (Exception ex) {
+							mostrarError(ex);
+						}
+					}
+				});
+
 		cargarCategorias();
 	}
 
-	// VALIDACIÓN DE CAMPOS
+	/**
+	 * Valida que los campos obligatorios estén completos.
+	 *
+	 * @return {@code true} si son válidos, {@code false} en caso contrario.
+	 */
 	private boolean validar() {
 		if (txtId.getText().isEmpty())
 			return mensaje("ID is required");
@@ -211,13 +247,22 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		return true;
 	}
 
-	// Mostrar mensaje
+	/**
+	 * Muestra un mensaje informativo.
+	 *
+	 * @param m mensaje a mostrar.
+	 * @return {@code false} para uso en validaciones.
+	 */
 	private boolean mensaje(String m) {
 		JOptionPane.showMessageDialog(this, m);
 		return false;
 	}
 
-	// Manejo de errores
+	/**
+	 * Muestra un mensaje de error según la excepción.
+	 *
+	 * @param e excepción capturada.
+	 */
 	private void mostrarError(Exception e) {
 		String msg = "Error";
 		if (e instanceof NumberFormatException)
@@ -230,7 +275,9 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 
-	// Cargar datos en tabla
+	/**
+	 * Carga todas las categorías en la tabla.
+	 */
 	private void cargarCategorias() {
 		try {
 			modelo.setRowCount(0);
@@ -242,7 +289,9 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		}
 	}
 
-	// Insertar categoría
+	/**
+	 * Inserta una nueva categoría en la base de datos.
+	 */
 	private void agregar() {
 		try {
 			if (!validar())
@@ -261,7 +310,9 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		}
 	}
 
-	// Llamar procedimiento almacenado
+	/**
+	 * Ejecuta un procedimiento almacenado para mostrar libros por categoría.
+	 */
 	private void librosPorCategoriaBD() {
 		try {
 			Connection con = new AccesoBD().conectar();
@@ -284,7 +335,9 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		}
 	}
 
-	// Eliminar categoría
+	/**
+	 * Elimina la categoría seleccionada.
+	 */
 	private void eliminar() {
 		try {
 			int fila = tabla.getSelectedRow();
@@ -305,18 +358,20 @@ public class VentanaCategorias extends JFrame implements ActionListener {
 		}
 	}
 
-	// Acciones de botones
+	/**
+	 * Maneja los eventos de los botones.
+	 *
+	 * @param e evento de acción.
+	 */
 	public void actionPerformed(ActionEvent e) {
+
 		if (e.getSource() == btnAgregar)
 			agregar();
-
 		if (e.getSource() == btnEliminar)
 			eliminar();
-
 		if (e.getSource() == btnVolver)
 			dispose();
 
-		// IMPORTANTE: debe coincidir con el texto del botón
 		if (e.getActionCommand().equals("See books"))
 			librosPorCategoriaBD();
 	}

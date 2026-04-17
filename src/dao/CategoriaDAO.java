@@ -8,77 +8,120 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Clase DAO (Data Access Object) para la gestión de categorías.
+ * <p>
+ * Implementa la interfaz {@link InterfazCategoria} y proporciona métodos para
+ * realizar operaciones sobre la tabla CATEGORIA en la base de datos.
+ * </p>
+ *
+ * Permite consultar, insertar y eliminar categorías, representadas mediante
+ * objetos de la clase {@link Categoria}.
+ *
+ * @version 1.0
+ * @see InterfazCategoria
+ * @see Categoria
+ * @see AccesoBD
+ */
 public class CategoriaDAO implements InterfazCategoria {
 
-    private AccesoBD conexion;
+	/** Objeto encargado de gestionar la conexión a la base de datos. */
+	private AccesoBD conexion;
 
-    public CategoriaDAO() {
-        conexion = new AccesoBD();
-    }
-// Se crea una lista vacía donde se guardarán las categorías obtenidas de la BD.
-    @Override
-    public List<Categoria> listarCategorias() throws Exception {
+	/**
+	 * Constructor de CategoriaDAO.
+	 * <p>
+	 * Inicializa el objeto de conexión a la base de datos.
+	 * </p>
+	 */
+	public CategoriaDAO() {
+		conexion = new AccesoBD();
+	}
 
-        List<Categoria> lista = new ArrayList<>();
+	/**
+	 * Obtiene todas las categorías almacenadas en la base de datos.
+	 * <p>
+	 * Ejecuta una consulta sobre la tabla CATEGORIA y construye una lista de
+	 * objetos {@link Categoria} con los datos obtenidos.
+	 * </p>
+	 *
+	 * @return una {@link List} de categorías.
+	 * @throws Exception si ocurre un error durante la consulta.
+	 */
+	@Override
+	public List<Categoria> listarCategorias() throws Exception {
 
-        Connection con = conexion.conectar(); // Se abre la conexión a la base de datos.
+		List<Categoria> lista = new ArrayList<>();
 
-        PreparedStatement stmt = con.prepareStatement(
-            "SELECT * FROM CATEGORIA"
-        );  // Se prepara la consulta SQL para obtener todas las categorías.
+		Connection con = conexion.conectar();
 
-        ResultSet rs = stmt.executeQuery();  // Se ejecuta la consulta y se obtiene un ResultSet con los resultados.
+		PreparedStatement stmt = con.prepareStatement("SELECT * FROM CATEGORIA");
 
-        while (rs.next()) {
+		ResultSet rs = stmt.executeQuery();
 
-            Categoria c = new Categoria(
-                rs.getInt("ID_CATEGORIA"),
-                rs.getString("TIPO_CATEGORIA"),
-                rs.getString("DESCRIPCION")
-            );
+		while (rs.next()) {
 
-            lista.add(c);
-            // Se recorre cada fila del resultado y se crea un objeto Categoria con los datos.
-           // Cada categoría se añade a la lista.
-        }
+			Categoria c = new Categoria(rs.getInt("ID_CATEGORIA"), rs.getString("TIPO_CATEGORIA"),
+					rs.getString("DESCRIPCION"));
 
-        con.close();// Se cierra la conexión a la BD.
+			lista.add(c);
+		}
 
-        return lista; // Se devuelve la lista completa de categorías.
-    }
+		con.close();
 
-    @Override
-    public void insertarCategoria(Categoria c) throws Exception { // Se abre la conexión a la BD.
+		return lista;
+	}
 
-        Connection con = conexion.conectar();
+	/**
+	 * Inserta una nueva categoría en la base de datos.
+	 * <p>
+	 * Ejecuta una sentencia SQL INSERT utilizando los datos del objeto
+	 * {@link Categoria}.
+	 * </p>
+	 *
+	 * <p>
+	 * El tipo de categoría se guarda como texto mediante el método {@code name()}
+	 * del ENUM correspondiente.
+	 * </p>
+	 *
+	 * @param c objeto categoría a insertar.
+	 * @throws Exception si ocurre un error durante la inserción.
+	 */
+	@Override
+	public void insertarCategoria(Categoria c) throws Exception {
 
-        PreparedStatement stmt = con.prepareStatement(
-            "INSERT INTO CATEGORIA VALUES (?,?,?)"
-        ); // Se abre la conexión a la BD.
+		Connection con = conexion.conectar();
 
-        stmt.setInt(1, c.getIdCategoria());
-        stmt.setString(2, c.getTipoCategoria().name());
-        stmt.setString(3, c.getDescripcion());
-        // Se asignan los valores a la sentencia SQL.
-        // .name() convierte el enum TipoCategoria a texto.
-        
-        stmt.executeUpdate(); // Se ejecuta la inserción en la base de datos.
+		PreparedStatement stmt = con.prepareStatement("INSERT INTO CATEGORIA VALUES (?,?,?)");
 
-        con.close(); // Se cierra la conexión.
-    }
+		stmt.setInt(1, c.getIdCategoria());
+		stmt.setString(2, c.getTipoCategoria().name());
+		stmt.setString(3, c.getDescripcion());
 
-    @Override
-    public void borrarCategoria(int id) throws Exception { 
+		stmt.executeUpdate();
 
-        Connection con = conexion.conectar();  // Se abre la conexión.
+		con.close();
+	}
 
-        PreparedStatement stmt = con.prepareStatement(
-            "DELETE FROM CATEGORIA WHERE ID_CATEGORIA=?"
-        ); // Se prepara la sentencia SQL para borrar una categoría por su ID.
+	/**
+	 * Elimina una categoría de la base de datos.
+	 * <p>
+	 * Ejecuta una sentencia SQL DELETE utilizando el identificador de la categoría.
+	 * </p>
+	 *
+	 * @param id identificador de la categoría a eliminar.
+	 * @throws Exception si ocurre un error durante la eliminación.
+	 */
+	@Override
+	public void borrarCategoria(int id) throws Exception {
 
-        stmt.setInt(1, id);    // Se asigna el ID recibido al parámetro de la consulta.
-        stmt.executeUpdate();  // Se ejecuta la eliminación.
+		Connection con = conexion.conectar();
 
-        con.close(); // Se cierra la conexión.
-    }
+		PreparedStatement stmt = con.prepareStatement("DELETE FROM CATEGORIA WHERE ID_CATEGORIA=?");
+
+		stmt.setInt(1, id);
+		stmt.executeUpdate();
+
+		con.close();
+	}
 }

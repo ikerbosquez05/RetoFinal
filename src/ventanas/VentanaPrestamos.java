@@ -17,16 +17,67 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
+/**
+ * Ventana de gestión de préstamos de la biblioteca.
+ * <p>
+ * Proporciona una interfaz gráfica completa para realizar operaciones CRUD
+ * (Create, Read, Update, Delete) sobre los préstamos almacenados en la base de datos.
+ * Incluye un formulario con los datos del préstamo, una tabla de visualización,
+ * botones de acción y la posibilidad de filtrar préstamos por usuario mediante
+ * un procedimiento almacenado.
+ * </p>
+ *
+ * @author [Autor]
+ * @version 1.0
+ * @see InterfazPrestamo
+ * @see PrestamoDAO
+ * @see AccesoBD
+ */
 public class VentanaPrestamos extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Campos de texto del formulario.
+	 * <ul>
+	 *   <li>{@code txtId} – Identificador único del préstamo.</li>
+	 *   <li>{@code txtUsuario} – ID del usuario que realiza el préstamo.</li>
+	 *   <li>{@code txtLibro} – ID del libro prestado.</li>
+	 *   <li>{@code txtFechaPrestamo} – Fecha de inicio del préstamo (formato {@code yyyy-MM-dd}).</li>
+	 *   <li>{@code txtFechaLimite} – Fecha límite de devolución (formato {@code yyyy-MM-dd}).</li>
+	 *   <li>{@code txtFechaDevolucion} – Fecha real de devolución (puede estar vacía si no se ha devuelto).</li>
+	 * </ul>
+	 */
 	private JTextField txtId, txtUsuario, txtLibro, txtFechaPrestamo, txtFechaLimite, txtFechaDevolucion;
-	private JButton btnAgregar, btnEliminar, btnModificar, btnVolver;
 
+	/** Botón para registrar un nuevo préstamo en la base de datos. */
+	private JButton btnAgregar;
+
+	/** Botón para eliminar el préstamo seleccionado en la tabla. */
+	private JButton btnEliminar;
+
+	/** Botón para modificar los datos del préstamo seleccionado. */
+	private JButton btnModificar;
+
+	/** Botón para cerrar esta ventana y volver a la pantalla anterior. */
+	private JButton btnVolver;
+
+	/** Tabla que muestra el listado de préstamos cargados desde la base de datos. */
 	private JTable tabla;
+
+	/** Modelo de datos que gestiona las filas y columnas de la tabla de préstamos. */
 	private DefaultTableModel modelo;
 
+	/**
+	 * Constructor de la ventana de gestión de préstamos.
+	 * <p>
+	 * Inicializa y configura todos los componentes de la interfaz gráfica:
+	 * panel de fondo, tarjeta principal, etiquetas, campos de texto,
+	 * botones de acción, tabla de préstamos con scroll y listeners de eventos.
+	 * Al finalizar la construcción, carga automáticamente los préstamos existentes
+	 * mediante {@link #cargarPrestamos()}.
+	 * </p>
+	 */
 	public VentanaPrestamos() {
 
 		setSize(1920, 1080);
@@ -267,7 +318,21 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		cargarPrestamos();
 	}
 
-	// VALIDACIÓN
+	/**
+	 * Valida que los campos obligatorios del formulario de préstamo contengan datos válidos.
+	 * <p>
+	 * Realiza las siguientes comprobaciones en orden:
+	 * <ul>
+	 *   <li>El campo ID no está vacío y contiene un valor numérico entero.</li>
+	 *   <li>Los campos Usuario, Libro, Fecha de Préstamo y Fecha Límite no están vacíos.</li>
+	 *   <li>La Fecha de Préstamo cumple el formato {@code yyyy-MM-dd}.</li>
+	 * </ul>
+	 * El campo Fecha de Devolución es opcional y no se valida aquí.
+	 * Si alguna comprobación falla, se muestra un mensaje al usuario.
+	 * </p>
+	 *
+	 * @return {@code true} si todos los campos obligatorios son válidos; {@code false} en caso contrario.
+	 */
 	private boolean validarCampos() {
 
 		if (txtId.getText().isEmpty())
@@ -294,12 +359,35 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		return true;
 	}
 
+	/**
+	 * Muestra un cuadro de diálogo informativo con el mensaje indicado.
+	 * <p>
+	 * Método auxiliar utilizado para mostrar errores de validación del formulario.
+	 * Siempre retorna {@code false} para su uso directo como valor de retorno
+	 * en métodos booleanos de validación.
+	 * </p>
+	 *
+	 * @param msg el texto del mensaje a mostrar en el diálogo.
+	 * @return {@code false} siempre, para uso directo como valor de retorno en validaciones.
+	 */
 	private boolean mensaje(String msg) {
 		JOptionPane.showMessageDialog(this, msg);
 		return false;
 	}
 
-	// ERRORES
+	/**
+	 * Muestra un cuadro de diálogo de error con información sobre la excepción recibida.
+	 * <p>
+	 * El mensaje mostrado varía según el tipo de excepción:
+	 * <ul>
+	 *   <li>{@link NumberFormatException}: indica número inválido.</li>
+	 *   <li>{@link SQLException}: indica error de base de datos.</li>
+	 *   <li>Cualquier otra excepción: muestra su mensaje si está disponible, o un genérico "Error".</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param e la excepción capturada que originó el error.
+	 */
 	private void mostrarError(Exception e) {
 		String msg = "Error";
 		if (e instanceof NumberFormatException)
@@ -312,6 +400,13 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		JOptionPane.showMessageDialog(this, msg);
 	}
 
+	/**
+	 * Limpia el contenido de todos los campos de texto del formulario de préstamo.
+	 * <p>
+	 * Debe invocarse tras completar exitosamente una operación de alta,
+	 * modificación o eliminación, dejando el formulario listo para una nueva entrada.
+	 * </p>
+	 */
 	private void limpiar() {
 		txtId.setText("");
 		txtUsuario.setText("");
@@ -321,7 +416,15 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		txtFechaDevolucion.setText("");
 	}
 
-	// CRUD
+	/**
+	 * Carga y refresca la tabla de préstamos con los datos actuales de la base de datos.
+	 * <p>
+	 * Vacía primero todas las filas existentes en el modelo de la tabla y luego
+	 * consulta el DAO para obtener el mapa actualizado de préstamos, añadiendo
+	 * una fila por cada entrada encontrada con sus seis columnas:
+	 * ID, usuario, libro, fecha de préstamo, fecha límite y fecha de devolución.
+	 * </p>
+	 */
 	private void cargarPrestamos() {
 		try {
 			modelo.setRowCount(0);
@@ -339,6 +442,19 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Registra un nuevo préstamo en la base de datos con los datos del formulario.
+	 * <p>
+	 * Flujo de ejecución:
+	 * <ol>
+	 *   <li>Valida los campos obligatorios mediante {@link #validarCampos()}.</li>
+	 *   <li>Invoca el método de inserción del DAO con los valores del formulario.</li>
+	 *   <li>Recarga la tabla y limpia el formulario.</li>
+	 * </ol>
+	 * La fecha de devolución se envía tal como está en el campo, pudiendo estar vacía
+	 * si el libro aún no ha sido devuelto.
+	 * </p>
+	 */
 	private void agregar() {
 		try {
 			if (!validarCampos())
@@ -358,6 +474,18 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Filtra y muestra en la tabla los préstamos activos de un usuario concreto.
+	 * <p>
+	 * Ejecuta el procedimiento almacenado {@code VerPrestamosUsuario(id_usuario)}
+	 * usando el ID introducido en {@code txtUsuario}. El resultado reemplaza
+	 * el contenido actual de la tabla con las columnas:
+	 * ID_PRESTAMO, NOMBRE, TITULO, FECHA_PRESTAMO y FECHA_LIMITE.
+	 * </p>
+	 *
+	 * @throws NumberFormatException si {@code txtUsuario} no contiene un entero válido.
+	 * @throws SQLException          si ocurre un error al ejecutar el procedimiento almacenado.
+	 */
 	private void verPrestamosUsuarioBD() {
 		try {
 			AccesoBD bd = new AccesoBD();
@@ -384,6 +512,14 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Modifica los datos de un préstamo existente con la información actual del formulario.
+	 * <p>
+	 * Primero valida los campos obligatorios mediante {@link #validarCampos()}.
+	 * Si son válidos, delega la actualización en el DAO usando el ID del préstamo
+	 * como clave de búsqueda. Tras la operación, recarga la tabla y limpia el formulario.
+	 * </p>
+	 */
 	private void modificar() {
 		try {
 			if (!validarCampos())
@@ -403,6 +539,14 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Elimina el préstamo actualmente seleccionado en la tabla de la base de datos.
+	 * <p>
+	 * Requiere que haya una fila seleccionada en la tabla. Solicita confirmación
+	 * explícita al usuario antes de proceder con el borrado. Tras la eliminación,
+	 * recarga la tabla y limpia el formulario.
+	 * </p>
+	 */
 	private void eliminar() {
 		try {
 			int fila = tabla.getSelectedRow();
@@ -428,6 +572,21 @@ public class VentanaPrestamos extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Maneja los eventos de acción generados por los botones de la interfaz.
+	 * <p>
+	 * Despacha cada evento al método correspondiente según el botón pulsado:
+	 * <ul>
+	 *   <li>{@code btnAgregar}   → {@link #agregar()}</li>
+	 *   <li>{@code btnModificar} → {@link #modificar()}</li>
+	 *   <li>{@code btnEliminar}  → {@link #eliminar()}</li>
+	 *   <li>{@code btnVolver}    → cierra la ventana con {@code dispose()}</li>
+	 *   <li>{@code "See Users"}  → {@link #verPrestamosUsuarioBD()}</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param e el evento de acción generado por el componente pulsado.
+	 */
 	public void actionPerformed(ActionEvent e) {
 		try {
 			if (e.getSource() == btnAgregar)

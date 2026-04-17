@@ -16,13 +16,91 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
 
+/**
+ * Descripción del reparto de tareas del proyecto.
+ * <p>
+ * El desarrollo del sistema de gestión de biblioteca se ha realizado de forma colaborativa,
+ * organizando el trabajo por módulos funcionales para mejorar la eficiencia, la claridad
+ * del código y la integración de todos los componentes.
+ * </p>
+ *
+ * <h2>Trabajo en grupo</h2>
+ * <p>
+ * Determinadas partes del proyecto han sido desarrolladas conjuntamente por todos los integrantes:
+ * </p>
+ * <ul>
+ *   <li>
+ *     <b>Exportación XML:</b> Implementación conjunta de la generación de un archivo XML
+ *     que recoge toda la información del sistema (usuarios, libros, préstamos y categorías).
+ *   </li>
+ *   <li>
+ *     <b>Acceso a base de datos (AccesoBD):</b> Diseño compartido de la clase encargada
+ *     de gestionar la conexión con la base de datos, centralizando la configuración
+ *     y facilitando su reutilización en todo el sistema.
+ *   </li>
+ * </ul>
+ *
+ * <h2>Trabajo individual por módulos</h2>
+ * <ul>
+ *   <li>
+ *     <b>Diago – Módulo de Préstamos:</b>
+ *     Desarrollo completo de la funcionalidad relacionada con préstamos, incluyendo
+ *     el DAO, operaciones CRUD, gestión de relaciones con libros e integración con la interfaz gráfica.
+ *   </li>
+ *
+ *   <li>
+ *     <b>Kevin – Módulo de Libros:</b>
+ *     Implementación del sistema de gestión de libros, incluyendo el DAO, operaciones CRUD,
+ *     validaciones y comprobaciones de existencia, así como su integración en la interfaz.
+ *   </li>
+ *
+ *   <li>
+ *     <b>Marcela – Módulo de Categorías:</b>
+ *     Desarrollo de la gestión de categorías, incluyendo listado, inserción y eliminación,
+ *     uso de objetos y enums, y conexión con la interfaz gráfica.
+ *   </li>
+ *
+ *   <li>
+ *     <b>Iker – Módulo de Usuarios:</b>
+ *     Implementación completa de la gestión de usuarios, incluyendo DAO, operaciones CRUD,
+ *     verificación de existencia y su integración en la interfaz.
+ *   </li>
+ * </ul>
+ *
+ * @version 1.0
+ */
+
+/**
+ * Ventana principal del sistema de gestión de biblioteca.
+ * <p>
+ * Actúa como menú principal de la aplicación, permitiendo acceder a las
+ * distintas secciones del sistema:
+ * <ul>
+ * <li>Gestión de libros.</li>
+ * <li>Gestión de préstamos.</li>
+ * <li>Gestión de usuarios.</li>
+ * <li>Gestión de categorías.</li>
+ * </ul>
+ * También permite exportar toda la información a un archivo XML.
+ * </p>
+ *
+ * @version 1.0
+ */
 public class VentanaMenu extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
+
+	/** Botón para exportar los datos a XML. */
 	private JButton btnXML;
 
+	/** Botones de navegación del menú. */
 	private JButton btnLibros, btnPrestamos, btnUsuarios, btnCategorias, btnSalir;
 
+	/**
+	 * Método principal que inicia la aplicación.
+	 *
+	 * @param args argumentos de ejecución.
+	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(() -> {
 			try {
@@ -33,6 +111,13 @@ public class VentanaMenu extends JFrame implements ActionListener {
 		});
 	}
 
+	/**
+	 * Constructor de la ventana principal.
+	 * <p>
+	 * Inicializa todos los componentes gráficos: panel principal, botones de
+	 * navegación y estilos visuales.
+	 * </p>
+	 */
 	public VentanaMenu() {
 
 		setSize(1920, 1080);
@@ -47,6 +132,7 @@ public class VentanaMenu extends JFrame implements ActionListener {
 		int cardWidth = 1000;
 		int cardHeight = 600;
 
+		// PANEL PRINCIPAL
 		JPanel card = new JPanel(null);
 		card.setBounds(277, 159, cardWidth, cardHeight);
 		card.setBackground(new Color(244, 239, 230));
@@ -69,7 +155,6 @@ public class VentanaMenu extends JFrame implements ActionListener {
 		int centroX = cardWidth / 2;
 
 		// BOTONES
-
 		btnLibros = new JButton("Books");
 		btnLibros.setBounds(centroX - 270, 180, 250, 60);
 		btnLibros.setBackground(new Color(120, 94, 60));
@@ -135,27 +220,46 @@ public class VentanaMenu extends JFrame implements ActionListener {
 		btnXML.addActionListener(this);
 	}
 
-	// 🔹 ACCIONES
+	// NAVEGACIÓN
+
+	/** Abre la ventana de gestión de libros. */
 	private void abrirLibros() {
 		new VentanaLibros().setVisible(true);
 	}
 
+	/** Abre la ventana de gestión de préstamos. */
 	private void abrirPrestamos() {
 		new VentanaPrestamos().setVisible(true);
 	}
 
+	/** Abre la ventana de gestión de usuarios. */
 	private void abrirUsuarios() {
 		new VentanaUsuarios().setVisible(true);
 	}
+
+	/** Abre la ventana de gestión de categorías. */
 
 	private void abrirCategorias() {
 		new VentanaCategorias().setVisible(true);
 	}
 
+	/** Cierra la ventana actual. */
 	private void cerrar() {
 		this.dispose();
 	}
 
+	/**
+	 * Genera un archivo XML con toda la información del sistema.
+	 * <p>
+	 * Incluye:
+	 * <ul>
+	 * <li>Usuarios</li>
+	 * <li>Libros</li>
+	 * <li>Préstamos</li>
+	 * <li>Categorías</li>
+	 * </ul>
+	 * </p>
+	 */
 	private void generarXML() {
 		try {
 
@@ -168,6 +272,8 @@ public class VentanaMenu extends JFrame implements ActionListener {
 			Map<Integer, String[]> libros = daoLibros.verLibros();
 			Map<Integer, String[]> prestamos = daoPrestamos.verPrestamos();
 
+			// Aquí se generan nodos XML para usuarios, libros, préstamos y categorías
+			// (estructura detallada igual que en el código original)
 			javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
 			javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -319,6 +425,11 @@ public class VentanaMenu extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Maneja los eventos de los botones del menú.
+	 *
+	 * @param e evento de acción generado.
+	 */
 	public void actionPerformed(ActionEvent e) {
 
 		if (e.getSource() == btnLibros)

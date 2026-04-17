@@ -17,16 +17,57 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
+/**
+ * Ventana de gestión de usuarios del sistema.
+ * <p>
+ * Proporciona una interfaz gráfica completa para realizar operaciones CRUD
+ * (Create, Read, Update, Delete) sobre los usuarios almacenados en la base de
+ * datos. Incluye un formulario de entrada, tabla de visualización y botones de
+ * acción.
+ * </p>
+ *
+ * @author [Autor]
+ * @version 1.0
+ * @see InterfazUsuario
+ * @see UsuarioDAO
+ * @see AccesoBD
+ */
 public class VentanaUsuarios extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
+	/** Campo de texto para el identificador único del usuario. */
 	private JTextField txtId, txtNombre, txtEmail, txtTelefono;
-	private JButton btnAgregar, btnEliminar, btnModificar, btnVolver;
 
+	/** Botón para agregar un nuevo usuario a la base de datos. */
+	private JButton btnAgregar;
+
+	/** Botón para eliminar el usuario seleccionado de la base de datos. */
+	private JButton btnEliminar;
+
+	/** Botón para modificar los datos del usuario seleccionado. */
+	private JButton btnModificar;
+
+	/** Botón para cerrar esta ventana y volver a la pantalla anterior. */
+	private JButton btnVolver;
+
+	/** Tabla que muestra el listado de usuarios cargados desde la base de datos. */
 	private JTable tabla;
+
+	/**
+	 * Modelo de datos que gestiona las filas y columnas de la tabla de usuarios.
+	 */
 	private DefaultTableModel modelo;
 
+	/**
+	 * Constructor de la ventana de gestión de usuarios.
+	 * <p>
+	 * Inicializa y configura todos los componentes de la interfaz gráfica: panel de
+	 * fondo, tarjeta principal, etiquetas, campos de texto, botones de acción,
+	 * tabla de usuarios con scroll y listeners de eventos. Al finalizar la
+	 * construcción, carga automáticamente los usuarios existentes.
+	 * </p>
+	 */
 	public VentanaUsuarios() {
 
 		setSize(1920, 1080);
@@ -231,7 +272,24 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		cargarUsuarios();
 	}
 
-	// VALIDACIÓN
+	/**
+	 * Valida que todos los campos del formulario de usuario contengan datos
+	 * válidos.
+	 * <p>
+	 * Realiza las siguientes comprobaciones en orden:
+	 * <ul>
+	 * <li>El campo ID no está vacío y contiene un valor numérico entero.</li>
+	 * <li>El campo Nombre no está vacío.</li>
+	 * <li>El campo Email no está vacío y cumple el formato
+	 * {@code usuario@dominio}.</li>
+	 * <li>El campo Teléfono no está vacío y contiene un valor numérico entero.</li>
+	 * </ul>
+	 * Si alguna validación falla, se muestra un mensaje de error al usuario.
+	 * </p>
+	 *
+	 * @return {@code true} si todos los campos son válidos; {@code false} en caso
+	 *         contrario.
+	 */
 	private boolean validarCamposUsuario() {
 
 		if (txtId.getText().trim().isEmpty())
@@ -265,12 +323,38 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		return true;
 	}
 
+	/**
+	 * Muestra un cuadro de diálogo informativo con el mensaje indicado.
+	 * <p>
+	 * Método auxiliar utilizado principalmente para mostrar errores de validación
+	 * de formulario. Siempre retorna {@code false} para facilitar su uso en
+	 * expresiones de retorno dentro de métodos booleanos de validación.
+	 * </p>
+	 *
+	 * @param msg el texto del mensaje a mostrar en el diálogo.
+	 * @return {@code false} siempre, para uso directo como valor de retorno en
+	 *         validaciones.
+	 */
 	private boolean mensaje(String msg) {
 		JOptionPane.showMessageDialog(this, msg);
 		return false;
 	}
 
-	// ERRORES
+	/**
+	 * Muestra un cuadro de diálogo de error con información sobre la excepción
+	 * recibida.
+	 * <p>
+	 * El mensaje mostrado varía según el tipo de excepción:
+	 * <ul>
+	 * <li>{@link NumberFormatException}: indica número inválido.</li>
+	 * <li>{@link SQLException}: indica error de base de datos.</li>
+	 * <li>Cualquier otra excepción: muestra su mensaje si está disponible, o un
+	 * genérico "Error".</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param e la excepción capturada que originó el error.
+	 */
 	private void mostrarError(Exception e) {
 		String msg = "Error";
 		if (e instanceof NumberFormatException)
@@ -283,7 +367,19 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 
-	// ID DUPLICADO
+	/**
+	 * Comprueba si ya existe un usuario con el ID indicado en la base de datos.
+	 * <p>
+	 * Consulta el mapa de usuarios a través del DAO. Si ocurre algún error durante
+	 * la consulta, lo muestra mediante {@link #mostrarError(Exception)} y retorna
+	 * {@code true} de forma conservadora para evitar inserciones duplicadas
+	 * accidentales.
+	 * </p>
+	 *
+	 * @param id el identificador entero del usuario a verificar.
+	 * @return {@code true} si el ID ya existe o si se produce un error;
+	 *         {@code false} si no existe.
+	 */
 	private boolean idExiste(int id) {
 		try {
 			InterfazUsuario dao = new UsuarioDAO();
@@ -295,7 +391,14 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		}
 	}
 
-	// LIMPIAR
+	/**
+	 * Limpia el contenido de todos los campos de texto del formulario.
+	 * <p>
+	 * Debe llamarse después de completar exitosamente una operación de alta,
+	 * modificación o eliminación para dejar el formulario listo para una nueva
+	 * entrada.
+	 * </p>
+	 */
 	private void limpiarCampos() {
 		txtId.setText("");
 		txtNombre.setText("");
@@ -303,7 +406,15 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		txtTelefono.setText("");
 	}
 
-	// CRUD
+	/**
+	 * Carga y refresca la tabla de usuarios con los datos actuales de la base de
+	 * datos.
+	 * <p>
+	 * Vacía primero todas las filas existentes en el modelo de la tabla y luego
+	 * consulta al DAO para obtener el mapa actualizado de usuarios, añadiendo una
+	 * fila por cada entrada encontrada.
+	 * </p>
+	 */
 	private void cargarUsuarios() {
 		try {
 			modelo.setRowCount(0);
@@ -319,6 +430,20 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Agrega un nuevo usuario a la base de datos con los datos del formulario.
+	 * <p>
+	 * Flujo de ejecución:
+	 * <ol>
+	 * <li>Valida los campos del formulario mediante
+	 * {@link #validarCamposUsuario()}.</li>
+	 * <li>Comprueba que el ID no esté duplicado mediante
+	 * {@link #idExiste(int)}.</li>
+	 * <li>Invoca el método de inserción del DAO.</li>
+	 * <li>Recarga la tabla y limpia el formulario.</li>
+	 * </ol>
+	 * </p>
+	 */
 	private void agregarUsuario() {
 		try {
 			if (!validarCamposUsuario())
@@ -344,6 +469,20 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Verifica la existencia de un usuario en la base de datos mediante una función
+	 * SQL almacenada.
+	 * <p>
+	 * Ejecuta la función {@code ExisteUsuario(id)} directamente sobre la base de
+	 * datos usando el ID introducido en el campo {@code txtId}. Muestra un mensaje
+	 * indicando si el usuario existe (retorno {@code 1}) o no existe (retorno
+	 * {@code 0}).
+	 * </p>
+	 *
+	 * @throws NumberFormatException si el contenido de {@code txtId} no es un
+	 *                               entero válido.
+	 * @throws SQLException          si ocurre un error al ejecutar la consulta.
+	 */
 	private void comprobarUsuarioBD() {
 		try {
 			AccesoBD bd = new AccesoBD();
@@ -373,6 +512,15 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Modifica los datos de un usuario existente con la información actual del
+	 * formulario.
+	 * <p>
+	 * Primero valida los campos mediante {@link #validarCamposUsuario()}. Si son
+	 * válidos, delega la actualización en el DAO usando el ID como clave de
+	 * búsqueda. Tras la operación, recarga la tabla y limpia el formulario.
+	 * </p>
+	 */
 	private void modificarUsuario() {
 		try {
 			if (!validarCamposUsuario())
@@ -392,6 +540,14 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Elimina el usuario actualmente seleccionado en la tabla de la base de datos.
+	 * <p>
+	 * Requiere que haya una fila seleccionada en la tabla. Solicita confirmación
+	 * explícita al usuario antes de proceder con el borrado, ya que la operación es
+	 * irreversible. Tras la eliminación, recarga la tabla y limpia el formulario.
+	 * </p>
+	 */
 	private void eliminarUsuario() {
 		try {
 			int fila = tabla.getSelectedRow();
@@ -402,8 +558,8 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 			}
 
 			int confirm = JOptionPane.showConfirmDialog(this,
-					"Are you sure you want to delete this user?\nThis action cannot be undone.",
-					"Confirm deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+					"Are you sure you want to delete this user?\nThis action cannot be undone.", "Confirm deletion",
+					JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
 			if (confirm != JOptionPane.YES_OPTION)
 				return;
@@ -423,6 +579,21 @@ public class VentanaUsuarios extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Maneja los eventos de acción generados por los botones de la interfaz.
+	 * <p>
+	 * Despacha cada evento al método correspondiente según el botón pulsado:
+	 * <ul>
+	 * <li>{@code btnAgregar} → {@link #agregarUsuario()}</li>
+	 * <li>{@code btnModificar} → {@link #modificarUsuario()}</li>
+	 * <li>{@code btnEliminar} → {@link #eliminarUsuario()}</li>
+	 * <li>{@code btnVolver} → cierra la ventana con {@code dispose()}</li>
+	 * <li>{@code "Exists?"} → {@link #comprobarUsuarioBD()}</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param e el evento de acción generado por el componente pulsado.
+	 */
 	public void actionPerformed(ActionEvent e) {
 		try {
 			if (e.getSource() == btnAgregar)

@@ -17,16 +17,64 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
+/**
+ * Ventana de gestión de libros de la biblioteca.
+ * <p>
+ * Proporciona una interfaz gráfica para realizar operaciones CRUD (Create,
+ * Read, Delete) sobre los libros almacenados en la base de datos. Incluye un
+ * formulario para introducir datos, una tabla para visualizar los libros,
+ * botones de acción y la posibilidad de ordenar los libros mediante un
+ * procedimiento almacenado.
+ * </p>
+ *
+ * @author [Autor]
+ * @version 1.0
+ * @see InterfazLibro
+ * @see LibroDAO
+ * @see AccesoBD
+ */
 public class VentanaLibros extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Campos de texto del formulario.
+	 * <ul>
+	 * <li>{@code txtId} – Identificador único del libro.</li>
+	 * <li>{@code txtTitulo} – Título del libro.</li>
+	 * <li>{@code txtAutor} – Autor del libro.</li>
+	 * <li>{@code txtAño} – Año de publicación del libro.</li>
+	 * </ul>
+	 */
 	private JTextField txtId, txtTitulo, txtAutor, txtAño;
-	private JButton btnAgregar, btnEliminar, btnOrdenar, btnVolver;
 
+	/** Botón para agregar un nuevo libro a la base de datos. */
+	private JButton btnAgregar;
+
+	/** Botón para eliminar el libro seleccionado. */
+	private JButton btnEliminar;
+
+	/** Botón para ordenar los libros mediante un procedimiento almacenado. */
+	private JButton btnOrdenar;
+
+	/** Botón para cerrar la ventana y volver a la pantalla anterior. */
+	private JButton btnVolver;
+
+	/** Tabla que muestra el listado de libros. */
 	private JTable tabla;
+
+	/** Modelo de datos asociado a la tabla de libros. */
 	private DefaultTableModel modelo;
 
+	/**
+	 * Constructor de la ventana de gestión de libros.
+	 * <p>
+	 * Inicializa todos los componentes gráficos: panel principal, formulario,
+	 * etiquetas, campos de texto, botones y tabla. También configura estilos
+	 * visuales y eventos de interacción. Finalmente, carga los libros existentes
+	 * desde la base de datos.
+	 * </p>
+	 */
 	public VentanaLibros() {
 
 		setSize(1920, 1080);
@@ -40,6 +88,7 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		fondo.setBackground(new Color(237, 230, 208));
 		setContentPane(fondo);
 
+		// PANEL PRINCIPAL (CARD)
 		JPanel card = new JPanel();
 		card.setLayout(null);
 		card.setBounds(265, 90, 1000, 600);
@@ -78,7 +127,7 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		lblFecha.setBounds(550, 180, 100, 25);
 		card.add(lblFecha);
 
-		// CAMPOS
+		// CAMPOS DE TEXTO
 		txtId = new JTextField();
 		txtId.setBounds(350, 100, 150, 35);
 		txtId.setBackground(new Color(250, 247, 242));
@@ -158,15 +207,15 @@ public class VentanaLibros extends JFrame implements ActionListener {
 
 		// TABLA
 		modelo = new DefaultTableModel(new String[] { "ID", "Qualification", "Author", "Date" }, 0);
-
 		tabla = new JTable(modelo);
 
+		// ESTILOS DE TABLA
 		tabla.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 		tabla.setRowHeight(28);
 		tabla.setShowGrid(false);
 		tabla.setIntercellSpacing(new Dimension(0, 0));
 
-		// colores filas alternas
+		// FILAS ALTERNAS
 		tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 			public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row,
 					int col) {
@@ -175,30 +224,25 @@ public class VentanaLibros extends JFrame implements ActionListener {
 				if (!sel) {
 					setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 247, 242));
 				}
-
 				return this;
 			}
 		});
 
-		// selección
 		tabla.setSelectionBackground(new Color(200, 183, 156));
 		tabla.setSelectionForeground(Color.BLACK);
 
-		// HEADER
+		// CABECERA
 		JTableHeader header = tabla.getTableHeader();
 		header.setBackground(new Color(120, 94, 60));
 		header.setForeground(Color.WHITE);
 		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-		header.setBorder(BorderFactory.createEmptyBorder());
 
 		// SCROLL
 		JScrollPane scroll = new JScrollPane(tabla);
 		scroll.setBounds(150, 350, 700, 200);
-		scroll.setBorder(BorderFactory.createLineBorder(new Color(200, 183, 156)));
-
 		card.add(scroll);
 
-		// CLICK TABLA
+		// EVENTO CLICK TABLA
 		tabla.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				try {
@@ -210,15 +254,22 @@ public class VentanaLibros extends JFrame implements ActionListener {
 					txtTitulo.setText(tabla.getValueAt(fila, 1).toString());
 					txtAutor.setText(tabla.getValueAt(fila, 2).toString());
 					txtAño.setText(tabla.getValueAt(fila, 3).toString());
+
 				} catch (Exception ex) {
 					mostrarError(ex);
 				}
 			}
 		});
+
 		cargarLibros();
 	}
 
-	// VALIDACIÓN
+	/**
+	 * Valida que todos los campos obligatorios del formulario estén completos.
+	 *
+	 * @return {@code true} si los campos son válidos, {@code false} en caso
+	 *         contrario.
+	 */
 	private boolean validar() {
 		if (txtId.getText().isEmpty())
 			return mensaje("Mandatory ID");
@@ -231,12 +282,22 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		return true;
 	}
 
+	/**
+	 * Muestra un mensaje informativo al usuario.
+	 *
+	 * @param msg mensaje a mostrar.
+	 * @return {@code false} para facilitar validaciones.
+	 */
 	private boolean mensaje(String msg) {
 		JOptionPane.showMessageDialog(this, msg);
 		return false;
 	}
 
-	// ERRORES
+	/**
+	 * Muestra un mensaje de error según la excepción recibida.
+	 *
+	 * @param e excepción capturada.
+	 */
 	private void mostrarError(Exception e) {
 		String msg = "Error";
 		if (e instanceof NumberFormatException)
@@ -249,6 +310,9 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
 	}
 
+	/**
+	 * Limpia los campos del formulario.
+	 */
 	private void limpiar() {
 		txtId.setText("");
 		txtTitulo.setText("");
@@ -256,7 +320,9 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		txtAño.setText("");
 	}
 
-	// CRUD
+	/**
+	 * Carga todos los libros desde la base de datos en la tabla.
+	 */
 	private void cargarLibros() {
 		try {
 			modelo.setRowCount(0);
@@ -274,13 +340,15 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Inserta un nuevo libro en la base de datos.
+	 */
 	private void agregar() {
 		try {
 			if (!validar())
 				return;
 
 			int id = Integer.parseInt(txtId.getText());
-
 			InterfazLibro dao = new LibroDAO();
 
 			if (dao.existeLibro(id)) {
@@ -300,13 +368,15 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Ejecuta un procedimiento almacenado para mostrar los libros ordenados.
+	 */
 	private void ejecutarProcedimientoLibros() {
 		try {
 			AccesoBD bd = new AccesoBD();
 			Connection con = bd.conectar();
 
 			CallableStatement cs = con.prepareCall("{CALL TodosLosLibrosOrdenados()}");
-
 			ResultSet rs = cs.executeQuery();
 
 			modelo.setRowCount(0);
@@ -325,6 +395,9 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Elimina el libro seleccionado de la base de datos.
+	 */
 	private void eliminar() {
 		try {
 			int fila = tabla.getSelectedRow();
@@ -349,6 +422,11 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		}
 	}
 
+	/**
+	 * Maneja los eventos de los botones.
+	 *
+	 * @param e evento de acción.
+	 */
 	public void actionPerformed(ActionEvent e) {
 
 		if (e.getSource() == btnAgregar)
@@ -356,7 +434,7 @@ public class VentanaLibros extends JFrame implements ActionListener {
 		if (e.getSource() == btnEliminar)
 			eliminar();
 		if (e.getSource() == btnOrdenar)
-		    ejecutarProcedimientoLibros();
+			ejecutarProcedimientoLibros();
 		if (e.getSource() == btnVolver)
 			dispose();
 	}
